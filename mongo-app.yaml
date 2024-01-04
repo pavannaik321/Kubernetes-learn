@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment #which type of file is this
+metadata:
+  name: mongo-deployment #name of the file
+  labels: 
+    app: mongo #name of the lable
+spec:
+  replicas: 1  #how many replicas of mongo db you want to create
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers: #here we are creating a container
+      - name: mongo
+        image: mongo:5.0
+        ports:
+        - containerPort: 27017 #specifing the port at which the mongo db will run
+        env: #this varibale in the env file will be secured
+        - name: MONGO_INITDB_ROOT_USERNAME #initilize the name form the documentaion
+          valueFrom:
+            secretKeyRef: #taking reference username value form the secret key file
+              name: mongo-secret #name of the file from where you want to take value
+              key: mongo-user #specifing the variable name in the secret key file to access data
+        - name: MONGO_INITDB_ROOT_PASSWORD #initilize the password form the documentaion
+          valueFrom:
+            secretKeyRef: #taking reference password value form the secret key file
+              name: mongo-secret #name of the file from where you want to take value
+              key: mongo-password #specifing the variable name in the secret key file to access data
+
+--- #break of yaml file
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-service
+spec:
+  selector: #we are conncecting to the mongo file
+    app: mongo
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017  #connect to the target port of the mongo 

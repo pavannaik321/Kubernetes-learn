@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment #which type of file is this
+metadata:
+  name: webapp-deployment #name of the file
+  labels: 
+    app: webapp #name of the lable
+spec:
+  replicas: 1  #how many replicas of mongo db you want to create
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers: #here we are creating a container
+      - name: webapp
+        image: mongo-express:latest
+        ports:
+        - containerPort: 8081 #specifing the port at which the mongo express will run
+        env: #this varibale in the env file will be secured
+        - name: ME_CONFIG_MONGODB_SERVER   #initilize the name form the documentaion
+          valueFrom:
+            configMapKeyRef: #taking reference username value form the config page file
+              name: mongo-config #name of the file from where you want to take value
+              key: mongo-url #specifing the variable name in the secret key file to access data
+        - name: ME_CONFIG_MONGODB_ADMINUSERNAME #initilize the name form the documentaion
+          valueFrom:
+            secretKeyRef: #taking reference username value form the secret key file
+              name: mongo-secret #name of the file from where you want to take value
+              key: mongo-user #specifing the variable name in the secret key file to access data
+        - name: ME_CONFIG_MONGODB_ADMINPASSWORD #initilize the password form the documentaion
+          valueFrom:
+            secretKeyRef: #taking reference password value form the secret key file
+              name: mongo-secret #name of the file from where you want to take value
+              key: mongo-password #specifing the variable name in the secret key file to access data
+
+--- #break of yaml file
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-service
+spec:
+  type: NodePort #type of file
+  selector: #we are conncecting to the mongo file
+    app: webapp
+  ports:
+    - protocol: TCP
+      port: 8081 #it will come form the container port
+      targetPort: 8081  #it will also come from the container port 
+      nodePort: 30100
